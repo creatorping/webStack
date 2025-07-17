@@ -103,7 +103,7 @@
         search(word, trans) {
             trans.empty();
             // 这里由用户浏览器再次访问公网ip地址请求WorkSearch接口
-            let url = `http://117.72.223.181:8080/WorkSearchHandler?word==${encodeURIComponent(word)}`;
+            let url = `http://117.72.223.181:8080/WorkSearchHandler?word=${encodeURIComponent(word)}`;
             $.ajax({
                 url: url,
                 type: 'get',
