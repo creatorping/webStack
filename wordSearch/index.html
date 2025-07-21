@@ -128,7 +128,7 @@
                 success: function (data) {
                     data = data.message[0];
                     trans.append(data["paraphrase"]);
-                    phonetic.append(data["phonetic"] || "无音标");
+                    phonetic.append(data["phonetic"] || "");
                 },
                 data: {}
             });
