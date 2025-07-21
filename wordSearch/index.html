@@ -57,6 +57,12 @@
         font-family: Verdana;
         color: rgb(149, 170, 109);
     }
+    .table tbody tr:nth-child(even) {
+        background: rgb(230, 238, 214)
+    }
+    .table tbody tr:nth-child(odd) {
+        background: rgb(230, 238, 214)
+    }
 
     /* Alternating background colors */
     .table tr:nth-child(even) {
@@ -80,6 +86,14 @@
         right: 0;
         top: 0;
     }
+    .pronunciation_div {
+        height: 20px;
+        width: 20px;
+        background-image: url("./images/pronunciation.png");
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center;
+    }
 </style>
 
 <body>
@@ -92,7 +106,9 @@
     <table id="trans" class="table">
         <thead>
         <tr>
+            <th scope="col">发音</th>
             <th scope="col">单词</th>
+            <th scope="col">音标</th>
             <th scope="col">解释</th>
         </tr>
         </thead>
@@ -100,9 +116,9 @@
 </div>
 <script>
     class JinShanSearch {
-        search(word, trans) {
+        search(word, trans, phonetic) {
             trans.empty();
-            // 这里由用户浏览器再次访问公网ip地址请求WorkSearch接口
+            phonetic.empty();
             let url = `http://117.72.223.181:8080/WorkSearchHandler?word=${encodeURIComponent(word)}`;
             $.ajax({
                 url: url,
@@ -112,29 +128,58 @@
                 success: function (data) {
                     data = data.message[0];
                     trans.append(data["paraphrase"]);
+                    phonetic.append(data["phonetic"] || "无音标");
                 },
                 data: {}
             });
         }
     }
+
     search = new JinShanSearch();
     function searchAll() {
-        let words = $("#words").val().split("\n")
-        let ansArea = $("#trans")
-        ansArea.empty();
-        ansArea.append(`<thead><tr><th scope="col">单词</th><th scope="col">解释</th></tr></thead>`)
-        for (const word of words) {
-            if (word.trim() === "") continue;
-            let trans = $(`<td></td>`);
-            search.search(word, trans);
-            let row = $(`<tr><th scope="row">${word}</th></tr>`);
+        let words = $("#words").val().split("\n");
+        let ansArea = $("#trans");
+        ansArea.empty().append(`<thead><tr><th>发音</th><th>单词</th><th>音标</th><th>解释</th></tr></thead><tbody></tbody>`);
+
+        words.forEach(word => {
+            word = word.trim();
+            if(!word) return;
+
+            let row = $("<tr></tr>");
+            row.append(`<td><button onclick="playYoudaoAudio('${word.replace(/'/g, "\\'")}')"><div class="pronunciation_div"></div></button></td>`);
+            row.append(`<td>${word}</td>`);
+
+            let phonetic = $("<td></td>");
+            let trans = $("<td></td>");
+            new JinShanSearch().search(word, trans, phonetic);
+
+            row.append(phonetic);
             row.append(trans);
-            ansArea.append(row);
-        }
+            ansArea.find("tbody").append(row);
+        });
     }
     function tableToExcel() {
         var wb = XLSX.utils.table_to_book(document.getElementById("trans"));
         XLSX.writeFile(wb, "单词表.xlsx");
+    }
+    function playYoudaoAudio(word) {
+        // 方案1：直接调用有道官方音频接口（需处理跨域）
+        const audioUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=1`;
+        new Audio(audioUrl).play().catch(e => {
+            console.error("自动播放被阻止:", e);
+            // 方案2：降级使用Web Speech API
+            fallbackTTS(word);
+        });
+    }
+    function fallbackTTS(text) {
+        if ('speechSynthesis' in window) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.9;
+            speechSynthesis.speak(utterance);
+        } else {
+            alert("您的浏览器不支持语音合成");
+        }
     }
 </script>
 </body>

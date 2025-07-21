@@ -1,0 +1,66 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>基于日期的彩票号码预测器</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      margin-top: 100px;
+    }
+    .number {
+      font-size: 48px;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>基于日期的彩票号码预测器</h1>
+<p>今天的日期：<span id="date"></span></p>
+<div class="number" id="randomNumber"></div>
+
+<script>
+  // 设置今天的日期为种子
+  const today = new Date();
+  const dateString = today.toISOString().split('T')[0]; // YYYY-MM-DD
+  document.getElementById('date').textContent = dateString;
+
+  // 简单的字符串哈希函数
+  function hashString(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = (hash << 5) - hash + str.charCodeAt(i);
+      hash |= 0; // 转为32位整数
+    }
+    return Math.abs(hash);
+  }
+
+  // 用种子生成伪随机数生成器
+  function seededRandom(seed) {
+    let x = Math.sin(seed) * 10000;
+    return x - Math.floor(x);
+  }
+
+  // 使用种子生成4位随机数字
+  function generateNumber(seed) {
+    const digits = [];
+    for (let i = 0; i < 4; i++) {
+      seed = hashString(seed.toString() + i);
+      let rand = seededRandom(seed);
+      digits.push(Math.floor(rand * 10));
+    }
+    return digits.join('');
+  }
+
+  // 使用日期种子生成数字
+  const seed = hashString(dateString);
+  const randomNumber = generateNumber(seed);
+  document.getElementById('randomNumber').textContent = randomNumber;
+</script>
+
+</body>
+</html>
